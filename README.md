@@ -51,12 +51,15 @@ Shortcut "รูปความทรงจำลูก"
 
 ## เริ่มติดตั้งตามลำดับนี้
 
-1. [ตั้งค่า LINE Official Account](docs/01-line-setup.md) — สร้างบัญชี เอา token
+1. [ตั้งค่า LINE Official Account](docs/01-line-setup.md) — สร้างบัญชี เอารหัส 3 ตัว
 2. [ตั้งค่า Cloudflare](docs/02-cloudflare-setup.md) — สร้าง Worker แล้ว deploy
 3. [แก้ Shortcut เดิม](docs/03-shortcut-setup.md) — เปลี่ยนท้าย Shortcut ให้ยิงเข้า Worker
 4. [แก้ปัญหาที่เจอบ่อย](docs/04-troubleshooting.md) — เปิดอ่านเมื่อมันไม่ทำงาน
 
-ใช้เวลาประมาณ 45-60 นาที ทำทีละขั้นได้ ไม่ต้องทำรวดเดียว
+ใช้เวลาประมาณ 60-90 นาที ทำทีละขั้นได้ ไม่ต้องทำรวดเดียว
+
+**ขั้นที่ 1 กับ 2 ทำบนคอมพิวเตอร์** (เว็บ LINE กับ Cloudflare ใช้บนมือถือแล้วทรมาน)
+**ขั้นที่ 3 ทำบนไอโฟน** เพราะต้องแก้ Shortcut
 
 ## เส้นทางที่ Worker เปิดให้เรียก
 
