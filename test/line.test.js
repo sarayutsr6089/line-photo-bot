@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { buildMessages, extractSources, verifyLineSignature } from '../src/line.js';
-import { resolveCaption } from '../src/index.js';
+import { captionEnabled, resolveCaption } from '../src/index.js';
 
 const SECRET = 'test-channel-secret';
 
@@ -80,4 +80,14 @@ test('resolveCaption ใช้ค่าตั้งต้นเมื่อไ�
   assert.equal(resolveCaption(null, null), '📸 ความทรงจำวันนี้');
   assert.equal(resolveCaption('', 'abc'), '📸 ความทรงจำวันนี้');
   assert.equal(resolveCaption('', '0'), '📸 ความทรงจำวันนี้');
+});
+
+test('captionEnabled เปิดเฉพาะเมื่อตั้งค่าเป็น true เท่านั้น', () => {
+  assert.equal(captionEnabled('true'), true);
+  assert.equal(captionEnabled('TRUE'), true);
+  assert.equal(captionEnabled(' true '), true);
+  assert.equal(captionEnabled('false'), false);
+  assert.equal(captionEnabled(''), false);
+  assert.equal(captionEnabled(undefined), false);
+  assert.equal(captionEnabled('1'), false);
 });

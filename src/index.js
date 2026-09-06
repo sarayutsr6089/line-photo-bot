@@ -92,6 +92,14 @@ async function readIngestPayload(request) {
   };
 }
 
+/**
+ * LINE นับโควตาเป็น "รายข้อความ x ปลายทาง" ข้อความบรรยายจึงทำให้ใช้โควตาเป็นสองเท่า
+ * แผนฟรีของไทยให้ 200 ข้อความ/เดือน จึงปิดข้อความบรรยายไว้ก่อน ส่งเฉพาะรูป
+ */
+export function captionEnabled(value) {
+  return String(value ?? '').trim().toLowerCase() === 'true';
+}
+
 /** ข้อความบรรยายที่แนบไปกับรูป ถ้า Shortcut ไม่ได้ส่งมาก็ใช้ค่าตั้งต้น */
 export function resolveCaption(caption, years) {
   const trimmed = typeof caption === 'string' ? caption.trim() : '';
@@ -149,13 +157,15 @@ async function handleIngest(request, env) {
     previewUrl = buildImageUrl(request.url, env.PUBLIC_BASE_URL, previewId);
   }
 
-  const caption = resolveCaption(payload.caption, payload.years);
+  const caption = captionEnabled(env.SEND_CAPTION) ? resolveCaption(payload.caption, payload.years) : '';
   const messages = buildMessages({ caption, originalUrl, previewUrl });
   const outcome = await pushToAll(env.LINE_CHANNEL_ACCESS_TOKEN, targets, messages);
 
   await appendLog(env.PHOTOS, {
     at: new Date().toISOString(),
     caption,
+    // โควตา LINE นับต่อ message ต่อปลายทาง เก็บไว้ให้เห็นใน /status
+    lineMessagesUsed: messages.length * outcome.sent,
     sizeKb: Math.round(photoCheck.size / 1024),
     sent: outcome.sent,
     failed: outcome.failed,

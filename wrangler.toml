@@ -15,6 +15,11 @@ id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 # ใส่เมื่อใช้ custom domain เช่น "https://photos.example.com"
 PUBLIC_BASE_URL = ""
 
+# ส่งข้อความบรรยาย ("เมื่อ N ปีที่แล้ว") แนบไปกับรูปด้วยหรือไม่
+# LINE นับโควตาเป็น "ข้อความ x ปลายทาง" เปิดอันนี้ = ใช้โควตาเป็นสองเท่า
+# แผนฟรีของไทยให้ 200 ข้อความ/เดือน จึงตั้งเป็น "false" ไว้ก่อน
+SEND_CAPTION = "false"
+
 # ค่าต่อไปนี้ "ห้ามใส่ในไฟล์นี้" เพราะไฟล์นี้ขึ้น GitHub
 # ให้ไปตั้งเป็น Secret ใน Cloudflare dashboard แทน (ดู docs/02-cloudflare-setup.md ข้อ 2.4)
 #   LINE_CHANNEL_ACCESS_TOKEN   token ของบัญชี LINE
