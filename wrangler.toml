@@ -1,0 +1,23 @@
+# ค่าตั้งต้นของ Cloudflare Worker
+# ต้องแก้ id ของ KV ให้เป็นของตัวเองก่อน deploy ครั้งแรก (ดู docs/02-cloudflare-setup.md)
+
+name = "line-photo-bot"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# ที่เก็บรูปชั่วคราว 3 วัน เพื่อให้ LINE มา download ไปแสดงได้
+[[kv_namespaces]]
+binding = "PHOTOS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# ปล่อยว่างได้ ระบบจะเดา URL จาก request เอง
+# ใส่เมื่อใช้ custom domain เช่น "https://photos.example.com"
+PUBLIC_BASE_URL = ""
+
+# ค่าต่อไปนี้ "ห้ามใส่ในไฟล์นี้" เพราะไฟล์นี้ขึ้น GitHub
+# ให้ไปตั้งเป็น Secret ใน Cloudflare dashboard แทน (ดู docs/02-cloudflare-setup.md ข้อ 2.4)
+#   LINE_CHANNEL_ACCESS_TOKEN   token ของบัญชี LINE
+#   LINE_CHANNEL_SECRET         ใช้ตรวจลายเซ็น webhook
+#   INGEST_SECRET               รหัสที่ Shortcut ใช้ยิงรูปเข้ามา
+#   LINE_TARGET_IDS             รายชื่อปลายทาง คั่นด้วยจุลภาค เช่น "U111...,C222..."

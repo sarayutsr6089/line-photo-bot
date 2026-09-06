@@ -1,0 +1,32 @@
+# ทุกครั้งที่ push ขึ้น main จะรันเทสต์แล้ว deploy ขึ้น Cloudflare ให้อัตโนมัติ
+# ต้องตั้งค่า secret ชื่อ CLOUDFLARE_API_TOKEN ใน repo ก่อน (ดู docs/02-cloudflare-setup.md)
+
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

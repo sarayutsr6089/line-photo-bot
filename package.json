@@ -1,0 +1,15 @@
+{
+  "name": "line-photo-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ส่งรูปความทรงจำลูกเข้า LINE อัตโนมัติทุกวัน (iOS Shortcut -> Cloudflare Worker -> LINE Messaging API)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.20.0"
+  }
+}
