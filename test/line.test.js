@@ -67,19 +67,35 @@ test('extractSources ทนกับ events ที่หายไป', () => {
   assert.deepEqual(extractSources([]), []);
 });
 
-test('resolveCaption ใช้ข้อความที่ Shortcut ส่งมาก่อนเสมอ', () => {
-  assert.equal(resolveCaption('  ลูกวันนี้  ', '1'), 'ลูกวันนี้');
+const CAPTION_TODAY = new Date('2026-09-06T00:00:00Z');
+
+test('resolveCaption ใช้ข้อความที่ Shortcut เขียนมาเองก่อนเสมอ', () => {
+  const caption = resolveCaption(
+    { caption: '  ลูกวันนี้  ', taken: '2025-09-06', years: '1' },
+    'ฟรองซ์',
+    CAPTION_TODAY,
+  );
+  assert.equal(caption, 'ลูกวันนี้');
 });
 
-test('resolveCaption สร้างข้อความจากจำนวนปีเมื่อไม่ได้ส่ง caption', () => {
-  assert.equal(resolveCaption('', '1'), '📸 ความทรงจำวันนี้ เมื่อ 1 ปีที่แล้ว');
-  assert.equal(resolveCaption(null, '3'), '📸 ความทรงจำวันนี้ เมื่อ 3 ปีที่แล้ว');
+test('resolveCaption สร้างข้อความจากวันถ่ายรูปเมื่อไม่ได้เขียน caption มา', () => {
+  assert.equal(
+    resolveCaption({ taken: '2025-09-06T14:23:00+07:00' }, 'ฟรองซ์', CAPTION_TODAY),
+    'วันนี้เมื่อปีที่แล้วของฟรองซ์ (06 ก.ย. 2568)',
+  );
+});
+
+test('resolveCaption ถอยไปใช้จำนวนปีเมื่ออ่านวันถ่ายรูปไม่ได้', () => {
+  assert.equal(
+    resolveCaption({ taken: 'อ่านไม่ออก', years: '3' }, 'ฟรองซ์', CAPTION_TODAY),
+    '📸 ความทรงจำวันนี้ เมื่อ 3 ปีที่แล้ว',
+  );
 });
 
 test('resolveCaption ใช้ค่าตั้งต้นเมื่อไม่มีข้อมูลอะไรเลย', () => {
-  assert.equal(resolveCaption(null, null), '📸 ความทรงจำวันนี้');
-  assert.equal(resolveCaption('', 'abc'), '📸 ความทรงจำวันนี้');
-  assert.equal(resolveCaption('', '0'), '📸 ความทรงจำวันนี้');
+  assert.equal(resolveCaption({}, 'ฟรองซ์', CAPTION_TODAY), '📸 ความทรงจำวันนี้');
+  assert.equal(resolveCaption(undefined, 'ฟรองซ์', CAPTION_TODAY), '📸 ความทรงจำวันนี้');
+  assert.equal(resolveCaption({ years: '0' }, 'ฟรองซ์', CAPTION_TODAY), '📸 ความทรงจำวันนี้');
 });
 
 test('captionEnabled เปิดเฉพาะเมื่อตั้งค่าเป็น true เท่านั้น', () => {

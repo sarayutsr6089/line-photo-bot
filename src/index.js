@@ -17,6 +17,7 @@ import {
   storeImage,
   validateImage,
 } from './images.js';
+import { buildMemoryCaption } from './caption.js';
 import { buildMessages, extractSources, pushToAll, verifyLineSignature } from './line.js';
 import { testImageBytes } from './test-image.js';
 import { json, maskId, parseTargetIds, timingSafeEqual } from './util.js';
@@ -83,6 +84,7 @@ async function readIngestPayload(request) {
       photo: photo && typeof photo !== 'string' ? new Uint8Array(await photo.arrayBuffer()) : null,
       preview: preview && typeof preview !== 'string' ? new Uint8Array(await preview.arrayBuffer()) : null,
       caption: form.get('caption') ?? params.get('caption'),
+      taken: form.get('taken') ?? params.get('taken'),
       years: form.get('years') ?? params.get('years'),
     };
   }
@@ -93,6 +95,7 @@ async function readIngestPayload(request) {
     photo: bytes.byteLength > 0 ? bytes : null,
     preview: null,
     caption: params.get('caption'),
+    taken: params.get('taken'),
     years: params.get('years'),
   };
 }
@@ -105,10 +108,16 @@ export function captionEnabled(value) {
   return String(value ?? '').trim().toLowerCase() === 'true';
 }
 
-/** ข้อความบรรยายที่แนบไปกับรูป ถ้า Shortcut ไม่ได้ส่งมาก็ใช้ค่าตั้งต้น */
-export function resolveCaption(caption, years) {
+/**
+ * ข้อความบรรยายที่แนบไปกับรูป ไล่ตามลำดับความชัดเจนของข้อมูลที่ได้มา
+ * 1. caption ที่ Shortcut เขียนมาเอง  2. วันถ่ายรูปจริง  3. จำนวนปี  4. ข้อความตั้งต้น
+ */
+export function resolveCaption({ caption, taken, years } = {}, childName, today) {
   const trimmed = typeof caption === 'string' ? caption.trim() : '';
   if (trimmed) return trimmed.slice(0, 500);
+
+  const fromDate = buildMemoryCaption(taken, childName, today);
+  if (fromDate) return fromDate.slice(0, 500);
 
   const n = Number.parseInt(years, 10);
   if (Number.isInteger(n) && n > 0) return `📸 ความทรงจำวันนี้ เมื่อ ${n} ปีที่แล้ว`;
@@ -153,7 +162,7 @@ async function handleIngest(request, env) {
     );
   }
 
-  const caption = captionEnabled(env.SEND_CAPTION) ? resolveCaption(payload.caption, payload.years) : '';
+  const caption = captionEnabled(env.SEND_CAPTION) ? resolveCaption(payload, env.CHILD_NAME) : '';
   return deliverPhoto(env, request.url, {
     targets,
     photo: payload.photo,
