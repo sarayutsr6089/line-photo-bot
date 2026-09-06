@@ -5,6 +5,7 @@
 //   POST /ingest      Shortcut ยิงรูปเข้ามาที่นี่ (ต้องมี header X-Bot-Secret)
 //   GET  /i/:id       LINE มาดึงรูปที่เก็บไว้ชั่วคราว (เปิดสาธารณะ)
 //   POST /webhook     LINE ส่ง event มาที่นี่ ใช้เก็บ user id / group id อัตโนมัติ
+//   GET  /test        ส่งรูปทดสอบเข้า LINE จากเบราว์เซอร์ (ต้องมี secret)
 //   GET  /ids         ดูรายชื่อ id ที่เก็บได้ (ต้องมี secret)
 //   GET  /status      ดูผลการส่งย้อนหลัง (ต้องมี secret)
 
@@ -17,7 +18,10 @@ import {
   validateImage,
 } from './images.js';
 import { buildMessages, extractSources, pushToAll, verifyLineSignature } from './line.js';
+import { testImageBytes } from './test-image.js';
 import { json, maskId, parseTargetIds, timingSafeEqual } from './util.js';
+
+export const TEST_CAPTION = '🧪 ทดสอบระบบ — ถ้าเห็นข้อความนี้พร้อมรูปสี่เหลี่ยมสีฟ้า แปลว่าระบบส่งรูปเข้า LINE ทำงานแล้ว';
 
 export default {
   async fetch(request, env) {
@@ -30,6 +34,7 @@ export default {
       if (request.method === 'GET' && path.startsWith('/i/')) {
         return handleServeImage(env, decodeURIComponent(path.slice('/i/'.length)));
       }
+      if (request.method === 'GET' && path === '/test') return handleTest(request, env);
       if (request.method === 'POST' && path === '/webhook') return handleWebhook(request, env);
       if (request.method === 'GET' && path === '/ids') return handleIds(request, env);
       if (request.method === 'GET' && path === '/status') return handleStatus(request, env);
@@ -148,16 +153,31 @@ async function handleIngest(request, env) {
     );
   }
 
-  const photoId = await storeImage(env.PHOTOS, payload.photo, photoCheck.contentType);
-  const originalUrl = buildImageUrl(request.url, env.PUBLIC_BASE_URL, photoId);
+  const caption = captionEnabled(env.SEND_CAPTION) ? resolveCaption(payload.caption, payload.years) : '';
+  return deliverPhoto(env, request.url, {
+    targets,
+    photo: payload.photo,
+    photoCheck,
+    preview: previewBytes,
+    previewCheck,
+    caption,
+  });
+}
+
+/**
+ * เก็บรูปลง KV แล้ว push เข้า LINE ทุกปลายทาง พร้อมบันทึก log
+ * ใช้ร่วมกันระหว่าง /ingest (รูปจริงจาก Shortcut) กับ /test (รูปทดสอบ)
+ */
+async function deliverPhoto(env, requestUrl, { targets, photo, photoCheck, preview, previewCheck, caption }) {
+  const photoId = await storeImage(env.PHOTOS, photo, photoCheck.contentType);
+  const originalUrl = buildImageUrl(requestUrl, env.PUBLIC_BASE_URL, photoId);
   let previewUrl = originalUrl;
 
-  if (previewBytes) {
-    const previewId = await storeImage(env.PHOTOS, previewBytes, previewCheck.contentType);
-    previewUrl = buildImageUrl(request.url, env.PUBLIC_BASE_URL, previewId);
+  if (preview) {
+    const previewId = await storeImage(env.PHOTOS, preview, previewCheck.contentType);
+    previewUrl = buildImageUrl(requestUrl, env.PUBLIC_BASE_URL, previewId);
   }
 
-  const caption = captionEnabled(env.SEND_CAPTION) ? resolveCaption(payload.caption, payload.years) : '';
   const messages = buildMessages({ caption, originalUrl, previewUrl });
   const outcome = await pushToAll(env.LINE_CHANNEL_ACCESS_TOKEN, targets, messages);
 
@@ -184,6 +204,35 @@ async function handleIngest(request, env) {
     },
     status,
   );
+}
+
+/**
+ * ปุ่มทดสอบ เปิดจากเบราว์เซอร์ได้เลย ไม่ต้องมี Shortcut
+ * ส่งรูปทดสอบที่ฝังไว้ในโค้ด พร้อมข้อความกำกับเสมอ เพื่อให้ดูออกว่าเป็นการทดสอบ
+ */
+async function handleTest(request, env) {
+  if (!isAuthorized(request, env)) return json({ ok: false, error: 'secret ไม่ถูกต้อง' }, 401);
+  if (!env.LINE_CHANNEL_ACCESS_TOKEN) {
+    return json({ ok: false, error: 'ยังไม่ได้ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN' }, 500);
+  }
+
+  const targets = parseTargetIds(env.LINE_TARGET_IDS);
+  if (targets.length === 0) {
+    return json({ ok: false, error: 'ยังไม่ได้ตั้งค่า LINE_TARGET_IDS ว่าจะส่งเข้าใคร' }, 500);
+  }
+
+  const bytes = testImageBytes();
+  const photoCheck = validateImage(bytes, { maxBytes: IMAGE_LIMITS.preview, label: 'รูปทดสอบ' });
+  if (!photoCheck.ok) return json({ ok: false, ...photoCheck }, photoCheck.status);
+
+  return deliverPhoto(env, request.url, {
+    targets,
+    photo: bytes,
+    photoCheck,
+    preview: null,
+    previewCheck: null,
+    caption: TEST_CAPTION,
+  });
 }
 
 async function handleServeImage(env, id) {
