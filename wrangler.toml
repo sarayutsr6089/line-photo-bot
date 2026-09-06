@@ -8,7 +8,7 @@ compatibility_date = "2025-06-01"
 # ที่เก็บรูปชั่วคราว 3 วัน เพื่อให้ LINE มา download ไปแสดงได้
 [[kv_namespaces]]
 binding = "PHOTOS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "206329817f7347e19be8042b9d69eb21"
 
 [vars]
 # ปล่อยว่างได้ ระบบจะเดา URL จาก request เอง

@@ -19,17 +19,16 @@
 
 ## 2.3 ใส่ Namespace ID ลงในโค้ด
 
+ถ้าเป็นการติดตั้งครั้งแรกตามคู่มือนี้ ค่าใน `wrangler.toml` ใส่ไว้ให้แล้ว ข้ามข้อนี้ได้
+
+จะมาแก้ข้อนี้ก็ต่อเมื่อ **สร้าง KV namespace ใหม่** หรือ **ย้ายไปบัญชี Cloudflare อื่น**
+
 1. เปิด repo นี้บน GitHub → กดเข้าไฟล์ `wrangler.toml`
 2. กดไอคอนดินสอ (Edit)
-3. หาบรรทัด
+3. หาบรรทัดที่ขึ้นต้นด้วย `id = ` ใต้หัวข้อ `[[kv_namespaces]]` แล้วแทนค่าข้างในเครื่องหมายคำพูดด้วย Namespace ID อันใหม่
+4. กด **Commit changes** — Cloudflare จะ deploy ใหม่ให้เองภายในไม่กี่นาที
 
-   ```
-   id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
-   ```
-
-   แทนที่ข้อความข้างในเครื่องหมายคำพูด ด้วย Namespace ID จากข้อ 2.2
-
-4. กด **Commit changes**
+> Namespace ID ไม่ใช่ข้อมูลลับ เก็บไว้ในไฟล์ได้ ต่างจาก token กับ secret ที่ต้องตั้งผ่านหน้าเว็บ Cloudflare เท่านั้น
 
 ## 2.4 เชื่อม GitHub กับ Cloudflare แล้ว deploy
 
